@@ -16,8 +16,8 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 	"sofa", "train", "tvmonitor"]
 
 #네트워크 불러오기
-net = cv2.dnn.readNetFromCaffe("imagezmq-streaming/MobileNetSSD_deploy.prototxt",
-                               "imagezmq-streaming/MobileNetSSD_deploy.caffemodel")
+net = cv2.dnn.readNetFromCaffe("../MobileNetSSD_deploy.prototxt",
+                               "../MobileNetSSD_deploy.caffemodel")
 
 #고려하는 객체 지정
 CONSIDER = set(["person", "car", "bus"])
