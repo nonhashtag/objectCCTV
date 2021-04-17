@@ -10,11 +10,11 @@ import time
 import cv2
 
 # construct the argument parser and parse the arguments
-'''ap = argparse.ArgumentParser()
+ap = argparse.ArgumentParser()
 ap.add_argument("-s", "--server-ip", required=True,
 	help="ip address of the server to which the client will connect")
 args = vars(ap.parse_args())
-'''
+
 
 # initialize the ImageSender object with the socket address of the
 # server
