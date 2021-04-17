@@ -19,8 +19,7 @@ args = vars(ap.parse_args())
 # initialize the ImageSender object with the socket address of the
 # server
 sender = imagezmq.ImageSender(connect_to="tcp://{}:5555".format(
-	"127.0.0.1"))
-	#args["server_ip"]))
+	args["server_ip"]))
 
 # get the host name, initialize the video stream, and allow the
 # camera sensor to warmup
