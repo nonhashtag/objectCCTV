@@ -8,27 +8,27 @@ import argparse
 import imutils
 import cv2
 
-#onlist -> [idx, object-N, checkedtime, startX~~~endY]
+#onlist -> [idx, object-N, checkedtime, startX~~~~endY]
 def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, object-N, confidence, startX, startY, endX, endY ]
     if len(onlist) == 0:
         onlist.append([nextidx[0], detected[1], datetime.now(), detected[3], detected[4], detected[5], detected[6]])
         nextidx[0] += 1
     for i in range(len(onlist)):
         if (onlist[i][1] == detected[1]
-                and abs(onlist[i][3]-detected[3]) < 50
-                and abs(onlist[i][4]-detected[4]) < 50
-                and abs(onlist[i][5]-detected[5]) < 50
-                and abs(onlist[i][6]-detected[6]) < 50):
+                and abs(onlist[i][3]-detected[3]) < 10
+                and abs(onlist[i][4]-detected[4]) < 10
+                and abs(onlist[i][5]-detected[5]) < 10
+                and abs(onlist[i][6]-detected[6]) < 10):
             onlist[i][2] = datetime.now()
             onlist[i][3] = detected[3]
             onlist[i][4] = detected[4]
             onlist[i][5] = detected[5]
             onlist[i][6] = detected[6]
         if i==len(onlist)-1 and not(onlist[i][1] == detected[1]
-                and abs(onlist[i][3]-detected[3]) < 50
-                and abs(onlist[i][4]-detected[4]) < 50
-                and abs(onlist[i][5]-detected[5]) < 50
-                and abs(onlist[i][6]-detected[6]) < 50):
+                and abs(onlist[i][3]-detected[3]) < 10
+                and abs(onlist[i][4]-detected[4]) < 10
+                and abs(onlist[i][5]-detected[5]) < 10
+                and abs(onlist[i][6]-detected[6]) < 10):
             onlist.append([nextidx[0], detected[1], datetime.now(), detected[3], detected[4], detected[5], detected[6]])
             nextidx[0] += 1
             #onlist.append([idx, detected[1], datetime, i[3], i[4], i[5], i[6], [i[3], i[4], i[5], i[6]]])
@@ -37,14 +37,17 @@ def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, o
 
 
 def timeout(onlist: list):
+    to_del = []
     if len(onlist) > 0:
-        while True:
-            
-            break
-
         for i in range(len(onlist)):
-            if (datetime.now() - onlist[i][2]).seconds > 0.5:
-                del onlist[i]
+            if (datetime.now() - onlist[i][2]).seconds > 2:
+                to_del.append(i)
+                print(to_del)
+    to_del.reverse()
+    if len(to_del) > 0:
+        for i in range(len(to_del)):
+            print('시작 {} 끝'.format(to_del[i]))
+            del onlist[to_del[i]]
 
 
 imageHub = imagezmq.ImageHub()
