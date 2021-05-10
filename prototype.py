@@ -9,13 +9,16 @@ import time
 from twilio.rest import Client
 
 
-#onlist -> [idx, object-N, checkedtime, startX~~~~endY]
+#onlist -> [idx, object-N, checkedtime, startX~~~~endY, SMS]
 sms = False
 
 def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, object-N, confidence, startX, startY, endX, endY ]
     if len(onlist) == 0:
-        onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6]])
+        onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6],
+                       False])
         nextidx[0] += 1
+        return
+
     for i in range(len(onlist)):
         if (onlist[i][1] == detected[1]
                 and abs(onlist[i][4]-detected[3]) < 30
@@ -32,7 +35,8 @@ def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, o
                 and abs(onlist[i][5]-detected[4]) < 30
                 and abs(onlist[i][6]-detected[5]) < 30
                 and abs(onlist[i][7]-detected[6]) < 30):
-            onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6]])
+            onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6],
+                           False])
             nextidx[0] += 1
             #onlist.append([idx, detected[1], datetime, i[3], i[4], i[5], i[6], [i[3], i[4], i[5], i[6]]])
             #ㄴ이건 사람객체에도 적용가능하게 할 예정(처음 좌표상태)
@@ -53,7 +57,7 @@ def timeout(onlist: list):
 
 def indexing(onlist :list, detected: list) -> int:
     for i in onlist:
-        if i[1]==detected[1] and i[4:]==detected[3:]:
+        if i[1]==detected[1] and i[4:8]==detected[3:]:
             return str(i[0])
 
 imageHub = imagezmq.ImageHub()
@@ -67,7 +71,8 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 "sofa", "train", "tvmonitor"]
 
 #네트워크 불러오기
-net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel")
+net = cv2.dnn.readNetFromCaffe("imagezmq-streaming/MobileNetSSD_deploy.prototxt",
+                               "imagezmq-streaming/MobileNetSSD_deploy.caffemodel")
 
 #고려하는 객체 지정
 CONSIDER = set(["person", "car", "bus"])
@@ -86,8 +91,8 @@ ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 mW = 2
 mH = 2
 
-account_sid = 'AC2c1c70d434d0540600123fe01d1847cb'
-auth_token = 'e54cb5c44f63510684c0b54dc06439cc'
+account_sid = 'api 계정'
+auth_token = '허가토큰'
 client = Client(account_sid, auth_token)
 
 
@@ -96,9 +101,11 @@ start_time = time.time()
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
 #video = cv2.VideoCapture("rearview_driving_mounts_1080p.mp4")
-video = cv2.VideoCapture("Stop_sign.mp4")
+video = cv2.VideoCapture("imagezmq-streaming/Stop_sign.mp4")
+#video = cv2.VideoCapture(0)
 #video = cv2.VideoCapture("FroggerHighway.mp4")
 #video = cv2.VideoCapture("testvideo.mp4")
+
 
 while True:
     rpiName, frame = video.read()
@@ -193,22 +200,22 @@ while True:
         if person_t.seconds >= 10.0:
             print("사람 경고")
             if sms == False :
-                client.api.account.messages.create(to="+821095962543", from_="+17326064954", body="Person Warn!")
+                client.api.account.messages.create(to="수신자", from_="발신자", body="Person Warn!")
                 sms = True
     else:
         p_time = datetime.now()
         sms = False'''
     if len(onlist) > 0:
-        for i in onlist:
-            if (datetime.now() - i[2]).seconds >= 2 and i[1] == 7:
-                print("차량 경고 {}번 차량".format(i[0]))
-                #if i[8] == False:
-                #    print("문자")
-                #    client.api.account.messages.create(to="+821095962543", from_="+17326064954", body="Car {} Warn!".format(i[0]))
-                #    i[8] = True
-            else:
+        for i in range(len(onlist)):
+            if (datetime.now() - onlist[i][2]).seconds >= 2 and onlist[i][1] == 7:
+                print("차량 경고 {}번 차량".format(onlist[i][0]))
+                if onlist[i][8] == False:
+                    print("문자")
+                    client.api.account.messages.create(to="수신자", from_="발신자", body="Car {} Warn!".format(onlist[i][0]))
+                    onlist[i][8] = True
+            #else:
                 #c_time = datetime.now()
-                sms = False
+                #onlist[i][8] = False
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
