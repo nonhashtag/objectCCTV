@@ -9,7 +9,7 @@ import time
 from twilio.rest import Client
 
 
-#onlist -> [idx, object-N, checkedtime, startX~~~~endY, SMS]
+#onlist -> [idx, object-N, firsttime, uptime, startX~~~~endY, SMS]
 sms = False
 
 def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, object-N, confidence, startX, startY, endX, endY ]
@@ -19,24 +19,27 @@ def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, o
         nextidx[0] += 1
         return
 
+
     for i in range(len(onlist)):
         if (onlist[i][1] == detected[1]
-                and abs(onlist[i][4]-detected[3]) < 30
-                and abs(onlist[i][5]-detected[4]) < 30
-                and abs(onlist[i][6]-detected[5]) < 30
-                and abs(onlist[i][7]-detected[6]) < 30):
+                and abs(onlist[i][4]-detected[3]) <= 30
+                and abs(onlist[i][5]-detected[4]) <= 30
+                and abs(onlist[i][6]-detected[5]) <= 30
+                and abs(onlist[i][7]-detected[6]) <= 30):
             onlist[i][3] = datetime.now()
             onlist[i][4] = detected[3]
             onlist[i][5] = detected[4]
             onlist[i][6] = detected[5]
             onlist[i][7] = detected[6]
-        if i==len(onlist)-1 and not(onlist[i][1] == detected[1]
-                and abs(onlist[i][4]-detected[3]) < 30
-                and abs(onlist[i][5]-detected[4]) < 30
-                and abs(onlist[i][6]-detected[5]) < 30
-                and abs(onlist[i][7]-detected[6]) < 30):
+            break
+        if (i==len(onlist)-1 and #onlist[i][1] == detected[1]
+            not(abs(onlist[i][4]-detected[3]) <= 30
+               and abs(onlist[i][5]-detected[4]) <= 30
+               and abs(onlist[i][6]-detected[5]) <= 30
+               and abs(onlist[i][7]-detected[6]) <= 30)):
             onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6],
                            False])
+            print(onlist)
             nextidx[0] += 1
             #onlist.append([idx, detected[1], datetime, i[3], i[4], i[5], i[6], [i[3], i[4], i[5], i[6]]])
             #ㄴ이건 사람객체에도 적용가능하게 할 예정(처음 좌표상태)
@@ -57,8 +60,10 @@ def timeout(onlist: list):
 
 def indexing(onlist :list, detected: list) -> int:
     for i in onlist:
-        if i[1]==detected[1] and i[4:8]==detected[3:]:
+        if (i[1] == detected[1]) and (i[4:8] == detected[3:]):
+            print(type(i[0]))
             return str(i[0])
+    return "???"
 
 imageHub = imagezmq.ImageHub()
 
@@ -91,8 +96,8 @@ ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 mW = 2
 mH = 2
 
-account_sid = 'api 계정'
-auth_token = '허가토큰'
+account_sid = 'API 키'
+auth_token = '권한 토큰'
 client = Client(account_sid, auth_token)
 
 
@@ -100,11 +105,9 @@ record = False
 start_time = time.time()
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
-#video = cv2.VideoCapture("rearview_driving_mounts_1080p.mp4")
-video = cv2.VideoCapture("imagezmq-streaming/Stop_sign.mp4")
 #video = cv2.VideoCapture(0)
-#video = cv2.VideoCapture("FroggerHighway.mp4")
-#video = cv2.VideoCapture("testvideo.mp4")
+#video = cv2.VideoCapture("cams/20210510_145505.mp4") #1번 주정차 1대
+video = cv2.VideoCapture("cams/20210510_143427.mp4") #2번 주정차 1+1
 
 
 while True:
@@ -162,7 +165,8 @@ while True:
                 # startX, startY, endX, endY = tracker(detections)
                 tracker(nextidx, onlist, detected)
                 # print('시작 {} {} {} {} 끝'.format(startX, startY, endX, endY))
-                print(len(onlist))
+                #print(len(onlist))
+                #print(len(onlist))
 
                 cv2.rectangle(frame, (startX, startY), (endX, endY),
                               (255, 0, 0), 2)
@@ -170,6 +174,7 @@ while True:
                 objidx = CLASSES[idx] + " " + indexing(onlist, detected)
                 cv2.putText(frame, objidx, (startX, startY - 20), cv2.FONT_ITALIC, 0.5,
                             (255, 255, 255), 1)
+
 
 
 #cv2.putText(frame, rpiName, (startX, startY-20), cv2.FONT_ITALIC, 0.5,
@@ -200,23 +205,24 @@ while True:
         if person_t.seconds >= 10.0:
             print("사람 경고")
             if sms == False :
-                client.api.account.messages.create(to="수신자", from_="발신자", body="Person Warn!")
+                client.api.account.messages.create(to="+수신자", from_="+발신자", body="Person Warn!")
                 sms = True
     else:
         p_time = datetime.now()
         sms = False'''
     if len(onlist) > 0:
         for i in range(len(onlist)):
-            if (datetime.now() - onlist[i][2]).seconds >= 2 and onlist[i][1] == 7:
+            if (datetime.now() - onlist[i][2]).seconds >= 10 and onlist[i][1] == 7:
                 print("차량 경고 {}번 차량".format(onlist[i][0]))
                 if onlist[i][8] == False:
                     print("문자")
-                    client.api.account.messages.create(to="수신자", from_="발신자", body="Car {} Warn!".format(onlist[i][0]))
+                    client.api.account.messages.create(to="+수신자", from_="+발신자", body="Car {} Warn!".format(onlist[i][0]))
                     onlist[i][8] = True
             #else:
                 #c_time = datetime.now()
                 #onlist[i][8] = False
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    #if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(100)>0:
         break
 
 video.release()
