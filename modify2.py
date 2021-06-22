@@ -25,10 +25,18 @@ from twilio.rest import Client
 #onlist -> [idx, object-N, firsttime, uptime, startX~~~~endY]l
 def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, object-N, confidence, startX, startY, endX, endY ]
     if len(onlist) == 0:
+        if detected[3]<0:
+            detected[3]=0
+        if detected[4]<0:
+            detected[4]=0
         onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6],
                        False])
         nextidx[0] += 1
     for i in range(len(onlist)):
+        if detected[3]<0:
+            detected[3]=0
+        if detected[4]<0:
+            detected[4]=0
         if (onlist[i][1] == detected[1]
                 and abs(onlist[i][4]-detected[3]) < 80
                 and abs(onlist[i][5]-detected[4]) < 80
@@ -45,6 +53,10 @@ def tracker(nextidx, onlist: list, detected: list): #detected-component = [ 0, o
                 and abs(onlist[i][5]-detected[4]) < 80
                 and abs(onlist[i][6]-detected[5]) < 80
                 and abs(onlist[i][7]-detected[6]) < 80):
+            if detected[3] < 0:
+                detected[3] = 0
+            if detected[4] < 0:
+                detected[4] = 0
             onlist.append([nextidx[0], detected[1], datetime.now(), datetime.now(), detected[3], detected[4], detected[5], detected[6],
                            False])
             nextidx[0] += 1
@@ -214,32 +226,29 @@ while True:
         cv2.imshow("Home pet location monitor ({})".format(i),
                    frame)
                    #montage)
-    cropped = False
+
     if len(onlist) > 0:
         for i in range(len(onlist)):
-            if (datetime.now() - onlist[i][2]).seconds >= 10 and onlist[i][1] == 7:
+            if (datetime.now() - onlist[i][2]).seconds >= 3 and onlist[i][1] == 7:
                 if onlist[i][8] == False:
-                    try:
-                        print("문자")
-                        print("차량 경고 {}번 차량".format(onlist[i][0]))
-                        cropped = frame[onlist[i][5]:onlist[i][7], onlist[i][4]:onlist[i][6]] #주차차량만 잘라내기
-                        pnow = time.strftime('%Y-%m-%d %H_%M', time.localtime(time.time()))
-                        cv2.imwrite('parking_shot/'+pnow+'.jpg', cropped) #주차차량 이미지 저장
-                        #find_plate = deplate(cropped)
-                        #if find_plate != None:
-                        #    cv2.imwrite('car_plates/'+pnow+'.jpg', find_plate)
-                        #client.api.account.messages.create(to="+821022302480", from_="+12513049647", body="Car {} Warn!".format(onlist[i][0]))
-                        #client.api.account.messages.create(to="+821022302480", from_="+12513049647", body="Car {} Warn!".format(i[0]))
-                        onlist[i][8] = True
-                    except AttributeError as e:
-                        print(e)
+                    print("문자")
+                    print("차량 경고 {}번 차량".format(onlist[i][0]))
+                    cropped = frame[onlist[i][5]:onlist[i][7], onlist[i][4]:onlist[i][6]] #주차차량만 잘라내기
+                    print(cropped)
+                    cv2.imshow("testing", cropped)
+                    pnow = time.strftime('%Y-%m-%d %H_%M', time.localtime(time.time()))
+                    cv2.imwrite('parking_shot/'+pnow+'.jpg', cropped) #주차차량 이미지 저장
+                    #find_plate = deplate(cropped)
+                    #if find_plate != None:
+                    #    cv2.imwrite('car_plates/'+pnow+'.jpg', find_plate)
+                    #client.api.account.messages.create(to="+821022302480", from_="+12513049647", body="Car {} Warn!".format(onlist[i][0]))
+                    #client.api.account.messages.create(to="+821022302480", from_="+12513049647", body="Car {} Warn!".format(i[0]))
+                    onlist[i][8] = True
 
-    if not(cropped is False):
-        cv2.imshow("testing", cropped)
+
 
 
     key = cv2.waitKey(1) & 0xFF
 
     if key == ord("q"):
         break
-	
