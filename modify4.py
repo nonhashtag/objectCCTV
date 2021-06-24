@@ -122,8 +122,8 @@ ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 mW = 2
 mH = 2
 
-account_sid = 'ACf0a587ebd35478480cd8fc445062e935'
-auth_token = 'c7ee620178aeee3d6a45d8f7ae881a00'
+account_sid = 'API_ID'
+auth_token = 'API_토큰'
 client = Client(account_sid, auth_token)
 
 
@@ -259,8 +259,7 @@ while True:
                     #if find_plate != None:
                     #cv2.imwrite('car_plates/'+pnow+'.jpg', find_plate)
 
-                    #client.api.account.messages.create(to="+821022302480", from_="+12513049647", body="Car {} Warn!".format(onlist[i][0]))
-                    #client.api.account.messages.create(to="+821022302480", from_="+12513049647", body="Car {} Warn!".format(i[0]))
+                    #lient.api.account.messages.create(to="수신자", from_="발신자", body="Car {} Warn!".format(onlist[i][0]))
                     onlist[i][8] = True
             if (datetime.now() - onlist[i][2]).seconds >= 4 and onlist[i][1] == 15:
                 lenX = onlist[i][6] - onlist[i][4]
